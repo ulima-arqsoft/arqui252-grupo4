@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameVault - Pasarela de Pago Segura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .secure-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .qr-container {
+            background: linear-gradient(45deg, #00d9ff, #00ff88);
+            padding: 3px;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    
+    <div class="w-full max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-2xl">🎮</span>
+                </div>
+                <h1 class="text-4xl font-bold text-white">GameVault</h1>
+            </div>
+            <p class="text-white/90 text-lg">Pasarela de Pago Segura con Protección DSA Multinivel</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            
+            <!-- Panel Izquierdo: Formulario de Pago -->
+            <div class="glass-effect rounded-2xl shadow-2xl p-8">
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Información de Pago</h2>
+                        <p class="text-sm text-gray-500">Cifrado AES-256 • PCI DSS Compliant</p>
+                    </div>
+                </div>
+
+                <!-- Secure Badge -->
+                <div class="flex items-center gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-lg secure-badge">
+                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                    </svg>
+                    <span class="text-sm font-semibold text-green-700">Conexión Segura • TLS 1.3</span>
+                </div>
+
+                <!-- Formulario -->
+                <form id="paymentForm" class="space-y-4">
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico *</label>
+                        <input type="email" id="userEmail" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                               placeholder="usuario@ejemplo.com">
+                        <p class="text-xs text-red-500 mt-1 hidden" id="emailError"></p>
+                    </div>
+
+                    <!-- Nombre Completo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo *</label>
+                        <input type="text" id="userName" required minlength="3"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                               placeholder="Juan Pérez García">
+                        <p class="text-xs text-gray-500 mt-1">Mínimo 3 caracteres</p>
+                    </div>
+
+                    <!-- Método de Pago -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Método de Pago *</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="paymentMethod" value="yape" checked class="hidden peer">
+                                <div class="p-4 border-2 border-gray-200 rounded-lg peer-checked:border-purple-500 peer-checked:bg-purple-50 transition flex flex-col items-center gap-2 hover:border-purple-300">
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">💜</span>
+                                    </div>
+                                    <span class="font-semibold text-sm">Yape</span>
+                                    <span class="text-xs text-gray-500">Hasta S/ 500</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="paymentMethod" value="card" class="hidden peer">
+                                <div class="p-4 border-2 border-gray-200 rounded-lg peer-checked:border-purple-500 peer-checked:bg-purple-50 transition flex flex-col items-center gap-2 hover:border-purple-300">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">💳</span>
+                                    </div>
+                                    <span class="font-semibold text-sm">Tarjeta</span>
+                                    <span class="text-xs text-gray-500">Hasta S/ 5,000</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Campos Dinámicos: Yape -->
+                    <div id="yapeFields" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Monto a Pagar</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">S/</span>
+                                <input type="number" id="amountYape" value="50.00" step="0.01" min="1" max="500" required
+                                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Límite Yape: S/ 1.00 - S/ 500.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Campos Dinámicos: Tarjeta -->
+                    <div id="cardFields" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Número de Tarjeta *</label>
+                            <input type="text" id="cardNumber" maxlength="19" placeholder="4111 1111 1111 1111"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                            <p class="text-xs text-gray-500 mt-1">16 dígitos (solo Visa/Mastercard)</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Vencimiento *</label>
+                                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">CVV *</label>
+                                <input type="password" id="cardCVV" placeholder="123" maxlength="3"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Monto a Pagar</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">S/</span>
+                                <input type="number" id="amountCard" value="50.00" step="0.01" min="1" max="5000"
+                                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Límite Tarjeta: S/ 1.00 - S/ 5,000.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Pago -->
+                    <button type="submit" id="payButton"
+                            class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Procesar Pago Seguro</span>
+                    </button>
+
+                    <!-- Test DSA -->
+                    <button type="button" id="testRateLimiter"
+                            class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span>🔴 Demo: Prueba de Rate Limiter (10 peticiones)</span>
+                    </button>
+                </form>
+
+                <!-- Security Info -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="flex items-start gap-3 text-xs text-gray-600">
+                        <svg class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                        </svg>
+                        <div>
+                            <p class="font-semibold mb-1">🛡️ Protecciones DSA Activas:</p>
+                            <ul class="space-y-1">
+                                <li>✓ <strong>Rate Limiting:</strong> Máx. 5 transacciones/minuto</li>
+                                <li>✓ <strong>Input Validation:</strong> Sanitización de datos en cliente y servidor</li>
+                                <li>✓ <strong>Secure Logging:</strong> Enmascaramiento de información sensible</li>
+                                <li>✓ <strong>Fail Securely:</strong> Servicio no arranca sin configuración válida</li>
+                                <li>✓ <strong>Least Privilege:</strong> Permisos mínimos en BD y contenedores</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Derecho: QR y Estado -->
+            <div class="space-y-6">
+                
+                <!-- QR de Yape -->
+                <div id="qrPanel" class="glass-effect rounded-2xl shadow-2xl p-8">
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Escanea con Yape</h3>
+                        <p class="text-sm text-gray-600 mb-6">Código QR verificado y temporal</p>
+                        
+                        <!-- QR Code -->
+                        <div class="qr-container inline-block mb-4">
+                            <div class="bg-white p-6 rounded-xl">
+                                <div id="qrCode" class="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center shimmer">
+                                    <svg class="w-32 h-32 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Badges -->
+                        <div class="flex items-center justify-center gap-2 mb-4 flex-wrap">
+                            <div class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                </svg>
+                                QR Verificado
+                            </div>
+                            <div class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"/>
+                                </svg>
+                                TLS 1.3
+                            </div>
+                            <div class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
+                                </svg>
+                                Expira en 5min
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-500">ID Transacción: <span class="font-mono" id="qrId">YAPESEC-2025-XXXX</span></p>
+                    </div>
+                </div>
+
+                <!-- Transaction Log -->
+                <div class="glass-effect rounded-2xl shadow-2xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3 class="font-bold text-gray-800">Registro de Transacciones</h3>
+                    </div>
+                    
+                    <div id="transactionLog" class="space-y-2 max-h-96 overflow-y-auto">
+                        <div class="text-center text-sm text-gray-400 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p>Sin transacciones registradas</p>
+                            <p class="text-xs mt-1">Las peticiones aparecerán aquí en tiempo real</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('paymentForm');
+        const testBtn = document.getElementById('testRateLimiter');
+        const transactionLog = document.getElementById('transactionLog');
+        const qrCode = document.getElementById('qrCode');
+        const qrId = document.getElementById('qrId');
+        const yapeFields = document.getElementById('yapeFields');
+        const cardFields = document.getElementById('cardFields');
+        const qrPanel = document.getElementById('qrPanel');
+
+        // Cambiar entre Yape y Tarjeta
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'yape') {
+                    yapeFields.classList.remove('hidden');
+                    cardFields.classList.add('hidden');
+                    qrPanel.classList.remove('hidden');
+                } else {
+                    yapeFields.classList.add('hidden');
+                    cardFields.classList.remove('hidden');
+                    qrPanel.classList.add('hidden');
+                }
+            });
+        });
+
+        // Formatear número de tarjeta
+        const cardNumberInput = document.getElementById('cardNumber');
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\s/g, '');
+                let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formatted;
+            });
+        }
+
+        // Formatear fecha de vencimiento
+        const cardExpiryInput = document.getElementById('cardExpiry');
+        if (cardExpiryInput) {
+            cardExpiryInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+
+        // Generar QR ID único
+        function generateQRId() {
+            const id = 'YAPESEC-2025-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            qrId.textContent = id;
+            return id;
+        }
+
+        generateQRId();
+
+        // Simular QR Code generado
+        setTimeout(() => {
+            qrCode.innerHTML = `
+                <svg viewBox="0 0 200 200" class="w-full h-full">
+                    <rect width="200" height="200" fill="white"/>
+                    ${Array.from({length: 15}, (_, i) => 
+                        Array.from({length: 15}, (_, j) => 
+                            Math.random() > 0.5 ? 
+                            `<rect x="${j*13}" y="${i*13}" width="12" height="12" fill="black"/>` : ''
+                        ).join('')
+                    ).join('')}
+                </svg>
+            `;
+        }, 500);
+
+        // Validar email
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Validar tarjeta (Luhn algorithm)
+        function validateCard(number) {
+            number = number.replace(/\s/g, '');
+            if (!/^\d{16}$/.test(number)) return false;
+            
+            let sum = 0;
+            let isEven = false;
+            for (let i = number.length - 1; i >= 0; i--) {
+                let digit = parseInt(number[i]);
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+                sum += digit;
+                isEven = !isEven;
+            }
+            return sum % 10 === 0;
+        }
+
+        // Agregar transacción al log
+        function addTransaction(status, data, index = null) {
+            const colors = {
+                200: { bg: 'bg-green-50', border: 'border-green-300', text: 'text-green-700', badge: 'bg-green-500' },
+                429: { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700', badge: 'bg-red-500' },
+                400: { bg: 'bg-yellow-50', border: 'border-yellow-300', text: 'text-yellow-700', badge: 'bg-yellow-500' },
+                'ERROR': { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', badge: 'bg-gray-500' },
+                'INFO': { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700', badge: 'bg-blue-500' }
+            };
+
+            const color = colors[status] || colors['ERROR'];
+            const time = new Date().toLocaleTimeString('es-PE');
+            const prefix = index !== null ? `#${index}` : '';
+
+            const statusText = {
+                200: 'Exitoso',
+                429: 'Bloqueado (Rate Limit)',
+                400: 'Error de Validación',
+                'ERROR': 'Error de Conexión',
+                'INFO': 'Información'
+            };
+
+            const entry = document.createElement('div');
+            entry.className = `${color.bg} border ${color.border} rounded-lg p-3 text-sm`;
+            entry.innerHTML = `
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="${color.badge} w-2 h-2 rounded-full"></span>
+                        <span class="font-semibold ${color.text}">${statusText[status] || status}</span>
+                        ${prefix ? `<span class="text-xs ${color.text} opacity-75">${prefix}</span>` : ''}
+                    </div>
+                    <span class="text-xs ${color.text} opacity-75">${time}</span>
+                </div>
+                <div class="text-xs ${color.text} font-mono overflow-x-auto max-h-20 overflow-y-auto">
+                    ${JSON.stringify(data, null, 2)}
+                </div>
+            `;
+
+            if (transactionLog.querySelector('.text-center')) {
+                transactionLog.innerHTML = '';
+            }
+            transactionLog.insertBefore(entry, transactionLog.firstChild);
+        }
+
+        // Enviar pago
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('userEmail').value;
+            const name = document.getElementById('userName').value;
+            const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+            // Validaciones del cliente
+            if (!validateEmail(email)) {
+                addTransaction('ERROR', { error: 'Email inválido' });
+                return;
+            }
+
+            if (name.length < 3) {
+                addTransaction('ERROR', { error: 'Nombre muy corto (mínimo 3 caracteres)' });
+                return;
+            }
+
+            let amount;
+            let paymentData = { email, name, method };
+
+            if (method === 'yape') {
+                amount = parseFloat(document.getElementById('amountYape').value);
+                if (amount < 1 || amount > 500) {
+                    addTransaction('ERROR', { error: 'Monto Yape debe estar entre S/ 1.00 y S/ 500.00' });
+                    return;
+                }
+            } else {
+                // Validaciones de tarjeta
+                const cardNumber = document.getElementById('cardNumber').value;
+                const cardExpiry = document.getElementById('cardExpiry').value;
+                const cardCVV = document.getElementById('cardCVV').value;
+                
+                if (!validateCard(cardNumber)) {
+                    addTransaction('ERROR', { error: 'Número de tarjeta inválido' });
+                    return;
+                }
+
+                if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
+                    addTransaction('ERROR', { error: 'Fecha de vencimiento inválida (formato: MM/AA)' });
+                    return;
+                }
+
+                if (!/^\d{3}$/.test(cardCVV)) {
+                    addTransaction('ERROR', { error: 'CVV inválido (3 dígitos)' });
+                    return;
+                }
+
+                amount = parseFloat(document.getElementById('amountCard').value);
+                if (amount < 1 || amount > 5000) {
+                    addTransaction('ERROR', { error: 'Monto con tarjeta debe estar entre S/ 1.00 y S/ 5,000.00' });
+                    return;
+                }
+
+                paymentData.cardLast4 = cardNumber.replace(/\s/g, '').slice(-4);
+            }
+
+            const button = document.getElementById('payButton');
+            button.disabled = true;
+            button.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Procesando...';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/v1/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: amount,
+                        currency: 'PEN',
+                        user_token: email,
+                        payment_method: method,
+                        metadata: paymentData
+                    })
+                });
+
+                const data = await response.json();
+                addTransaction(response.status, data);
+
+                if (response.status === 200 && method === 'yape') {
+                    generateQRId();
+                }
+            } catch (error) {
+                addTransaction('ERROR', { error: error.message });
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>Procesar Pago Seguro</span>';
+            }
+        });
+
+        // Test Rate Limiter
+        testBtn.addEventListener('click', async () => {
+            transactionLog.innerHTML = '';
+            addTransaction('INFO', { 
+                message: '🔴 DEMO DSA: Iniciando 10 peticiones simultáneas',
+                objetivo: 'Demostrar Rate Limiting (máx 5/min)',
+                expected: 'Primeras 5 OK, siguientes 5 bloqueadas con HTTP 429'
+            });
+
+            for (let i = 1; i <= 10; i++) {
+                fetch('http://localhost:8080/api/v1/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: 10,
+                        currency: 'PEN',
+                        user_token: 'test-rate-limit@gamevault.com',
+                        payment_method: 'yape'
+                    })
+                })
+                .then(res => res.json().then(data => ({ status: res.status, data })))
+                .then(({ status, data }) => addTransaction(status, data, i))
+                .catch(error => addTransaction('ERROR', { error: error.message }, i));
+            }
+        });
+    </script>
+</body>
+</html>
