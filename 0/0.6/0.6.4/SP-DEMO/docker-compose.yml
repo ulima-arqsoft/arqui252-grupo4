@@ -1,0 +1,64 @@
+# =======================================================
+# Servicios (Contenedores) que componen la aplicación
+# =======================================================
+services:
+
+  # 1. Microservicio de Pagos (Aplicación Node.js)
+  payment-microservice:
+    container_name: payments_service
+    
+    # Configuración de Construcción
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Mapeo de Puertos
+    ports:
+      - "8080:8080"
+    
+    # Variables de Entorno: Carga variables desde el archivo .env
+    env_file:
+      - ./.env
+    
+    # Dependencia: Espera a que la BD esté saludable (gracias al healthcheck)
+    depends_on:
+      payment-db:
+        condition: service_healthy
+        
+    # Política de Reinicio
+    restart: always
+
+  # 2. Base de Datos (PostgreSQL)
+  payment-db:
+    container_name: payments_database
+    
+    # Imagen oficial y estable de PostgreSQL
+    image: postgres:15-alpine
+    
+    # Variables de Entorno de la BD
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: payments_data 
+    
+    # Configuración de HEALTHCHECK (Asegura que el microservicio espere a que la BD esté lista)
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+    # Persistencia de Datos
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    
+    restart: always
+
+# =======================================================
+# Volúmenes
+# =======================================================
+# Definición del volumen persistente para los datos de la BD
+volumes:
+  db-data:
+    driver: local
