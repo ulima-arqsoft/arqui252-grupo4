@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  cosmos-demo:
+    build: .
+    container_name: cosmos-demo
+    ports:
+      - "8000:8000"
+    environment:
+      - COSMOSDB_URL=https://<TU_CUENTA>.documents.azure.com:443/
+      - COSMOSDB_KEY=<TU_LLAVE_PRIMARIA>
