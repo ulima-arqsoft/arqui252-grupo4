@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo del Dashboard</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            color: #0056b3; /* Un azul para los títulos */
+        }
+        /* Estilo para las cajas de cada sección */
+        #profile, #courses-container, #assignments-container {
+            background-color: #fff; /* Fondo blanco */
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px; /* Bordes redondeados */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra suave */
+        }
+        ul {
+            list-style: none; /* Quita los puntos de la lista */
+            padding: 0;
+        }
+        li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee; /* Línea separadora */
+        }
+        li:last-child {
+            border-bottom: none; /* Sin línea en el último elemento */
+        }
+        p {
+            margin-bottom: 5px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mi Dashboard Agregado</h1>
+
+    <div id="profile">
+        <h2>Perfil</h2>
+        <p>Cargando perfil...</p>
+    </div>
+
+    <div id="courses-container">
+        <h2>Mis Cursos</h2>
+        <ul id="courses"><li>Cargando cursos...</li></ul>
+    </div>
+
+    <div id="assignments-container">
+        <h2>Proximas Tareas</h2>
+        <ul id="assignments"><li>Cargando tareas...</li></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
