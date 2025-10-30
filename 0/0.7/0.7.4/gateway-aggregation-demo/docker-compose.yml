@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  profile-service:
+    build: ./profile-service
+    ports:
+      - "3001:3001" # Puerto interno del contenedor
+
+  enrollment-service:
+    build: ./enrollment-service
+    ports:
+      - "3002:3002" # Puerto interno del contenedor
+
+  assignment-service:
+    build: ./assignment-service
+    ports:
+      - "3003:3003" # Puerto interno del contenedor
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:3000" # Mapea puerto 8080 del host al 3000 del contenedor
+    depends_on: # Asegura que los mocks inicien antes que el gateway
+      - profile-service
+      - enrollment-service
+      - assignment-service
+  
+  frontend-app:
+    build: ./frontend-app
+    ports:
+      - "8000:80" # Accede al frontend en http://localhost:8000
+    depends_on:
+      - api-gateway # Asegura que el gateway inicie antes que el frontend
