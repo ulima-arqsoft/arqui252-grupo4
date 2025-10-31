@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  # 1. El Cliente (Frontend en React)
+  client:
+    build: ./client
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api-gateway
+    volumes: # Para hot-reloading (como en la demo de tu profe)
+      - ./client:/app
+      - /app/node_modules
+
+  # 2. Tu API Gateway (El Patrón)
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      # Le dice al gateway dónde encontrar los microservicios
+      - CP_SERVICE_URL=http://fake-services:3002
+      - CR_SERVICE_URL=http://fake-services:3002
+    depends_on:
+      fake-services:
+        condition: service_started # Espera a que los servicios falsos inicien
+
+  # 3. Los Microservicios Falsos (CP y CR)
+  fake-services:
+    build: ./fake-services
+    ports:
+      - "3002:3002" # Lo exponemos para que puedas probarlo en tu navegador si quieres
