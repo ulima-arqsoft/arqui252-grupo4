@@ -41,5 +41,5 @@ app.get("/reviews", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Fake-services (CP y CR) corriendo en http://localhost:${PORT}`);
+  console.log(`📦 Fake-services (CP y CR) corriendo en http://localhost:${PORT}`);
 });
