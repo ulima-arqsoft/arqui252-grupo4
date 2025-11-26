@@ -1,0 +1,36 @@
+{
+  "name": "demo-seguridad-contenedores-compras",
+  "version": "1.0.0",
+  "description": "Demo de Seguridad de Contenedores para Sistema de Compras",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "generate-data": "node scripts/generateData.js",
+    "seed": "node scripts/seed.js",
+    "test": "jest",
+    "docker:build": "docker build -f docker/Dockerfile -t compras-app:latest .",
+    "docker:build-secure": "docker build -f docker/Dockerfile.secure -t compras-app:secure .",
+    "docker:scan": "docker scan compras-app:latest",
+    "docker:compose": "docker-compose -f docker/docker-compose.yml up"
+  },
+  "keywords": ["container", "security", "docker", "kubernetes"],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}

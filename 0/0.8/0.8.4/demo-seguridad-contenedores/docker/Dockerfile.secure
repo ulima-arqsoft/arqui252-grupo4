@@ -1,0 +1,90 @@
+# DOCKERFILE SEGURO - MEJORES PRÁCTICAS
+
+# BUENA PRÁCTICA 1: Usar imagen base mínima y específica
+FROM node:18-alpine3.18 AS base
+
+# BUENA PRÁCTICA 2: Etiquetar imagen con metadata
+LABEL maintainer="tu-email@ejemplo.com" \
+      version="1.0" \
+      description="Sistema de Compras Seguro" \
+      security.scan="true"
+
+# ============================================
+# STAGE 1: Dependencias
+# ============================================
+FROM base AS dependencies
+
+WORKDIR /app
+
+# BUENA PRÁCTICA 3: Copiar solo archivos necesarios para instalar dependencias
+COPY package*.json ./
+
+# BUENA PRÁCTICA 4: Usar npm ci para instalación reproducible
+# BUENA PRÁCTICA 5: Solo dependencias de producción
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# ============================================
+# STAGE 2: Build (si fuera necesario)
+# ============================================
+FROM base AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+# Aquí irían comandos de build si tuvieras TypeScript, etc.
+
+# ============================================
+# STAGE 3: Producción
+# ============================================
+FROM base AS production
+
+# BUENA PRÁCTICA 6: Crear usuario no privilegiado
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+WORKDIR /app
+
+# BUENA PRÁCTICA 7: Copiar solo lo necesario desde stage anterior
+COPY --from=dependencies --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --chown=appuser:appgroup package*.json ./
+COPY --chown=appuser:appgroup src ./src
+COPY --chown=appuser:appgroup public ./public
+
+# BUENA PRÁCTICA 8: Cambiar a usuario no root
+USER appuser
+
+# BUENA PRÁCTICA 9: Documentar puerto expuesto
+EXPOSE 3000
+
+# BUENA PRÁCTICA 10: Variables de entorno sin valores sensibles
+ENV NODE_ENV=production \
+    PORT=3000 \
+    USER=appuser
+
+# BUENA PRÁCTICA 11: Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# BUENA PRÁCTICA 12: Usar array form para CMD
+CMD ["node", "src/server.js"]
+
+# ============================================
+# COMPARACIÓN DE RESULTADOS:
+# ============================================
+# Imagen insegura (Ubuntu):
+#   - Tamaño: ~180MB
+#   - Usuario: root (UID 0)
+#   - Vulnerabilidades: 50+
+#   - Paquetes innecesarios: muchos
+#
+# Imagen segura (Alpine):
+#   - Tamaño: ~50MB
+#   - Usuario: appuser (UID 1001)
+#   - Vulnerabilidades: <5
+#   - Solo lo necesario
+# ============================================
