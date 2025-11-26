@@ -1,0 +1,101 @@
+---
+# Network Policy: Denegar todo el tráfico por defecto
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: compras-sistema
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Network Policy: Permitir tráfico hacia la aplicación de compras
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-compras-ingress
+  namespace: compras-sistema
+spec:
+  podSelector:
+    matchLabels:
+      app: compras
+  policyTypes:
+  - Ingress
+  ingress:
+  # Permitir tráfico desde el Ingress Controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Permitir tráfico desde pods en el mismo namespace
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 3000
+
+---
+# Network Policy: Permitir tráfico saliente de la aplicación
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-compras-egress
+  namespace: compras-sistema
+spec:
+  podSelector:
+    matchLabels:
+      app: compras
+  policyTypes:
+  - Egress
+  egress:
+  # Permitir DNS
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  # Permitir acceso a base de datos (si está en otro pod)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: database
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Permitir HTTPS saliente (para APIs externas)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# Network Policy: Aislar base de datos
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-isolation
+  namespace: compras-sistema
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+  - Ingress
+  ingress:
+  # Solo permitir tráfico desde la aplicación de compras
+  - from:
+    - podSelector:
+        matchLabels:
+          app: compras
+    ports:
+    - protocol: TCP
+      port: 5432

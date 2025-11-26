@@ -1,0 +1,74 @@
+# BUENA PRÁCTICA: Excluir archivos innecesarios de la imagen Docker
+
+# Node modules (se instalarán en el contenedor)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Archivos de desarrollo
+.git/
+.gitignore
+.env
+.env.*
+*.env
+
+# Tests
+tests/
+*.test.js
+coverage/
+
+# Documentación
+docs/
+README.md
+*.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+logs/
+*.log
+
+# Datos locales
+data/
+*.db
+*.sqlite
+
+# Secretos
+secrets/
+*.key
+*.pem
+*.crt
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Kubernetes
+kubernetes/
+
+# Scripts de desarrollo
+scripts/
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
