@@ -2,204 +2,64 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Sistema de Compras Seguro - Demo</title>
+    <title>Demo Seguridad de Contenedores</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1> Sistema de Compras Seguro</h1>
-                <p class="subtitle">Demo de Seguridad de Contenedores</p>
-            </div>
-        </header>
+    <header>
+        <h1> Sistema de Compras Seguras</h1>
+    </header>
 
-        <!-- Hero Section -->
-        <section class="hero">
-            <div class="hero-content">
-                <h2>Bienvenido a la Demo de Seguridad</h2>
-                <p>Esta aplicación demuestra las mejores prácticas de seguridad en contenedores aplicadas a un sistema de compras completo.</p>
-                <div class="cta-buttons">
-                    <a href="login.html" class="btn btn-primary">Iniciar Sesión</a>
-                    <a href="#features" class="btn btn-secondary">Ver Características</a>
-                </div>
-            </div>
-        </section>
+    <main>
+        <h2>Productos Disponibles</h2>
+        <ul id="product-list">
+            <p>Cargando productos...</p>
+        </ul>
+        
+        <p><strong>Nota de la Demo:</strong> Revise el código para ver cómo se cargan los secretos y cómo se construye el contenedor.</p>
+        <button onclick="testAttack()">Probar Ataque Saliente (EGRESS)</button>
+        <p id="attack-status"></p>
+    </main>
 
-        <!-- Security Features -->
-        <section id="features" class="features">
-            <h2> Características de Seguridad</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Imagen Base Segura</h3>
-                    <p>Alpine Linux en lugar de Ubuntu reduce el tamaño en 72% y minimiza vulnerabilidades.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', fetchProducts);
 
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Usuario No Root</h3>
-                    <p>Ejecución con usuario no privilegiado (UID 1001) siguiendo el principio de menor privilegio.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
+        async function fetchProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                const list = document.getElementById('product-list');
+                list.innerHTML = ''; // Limpiar
+                
+                products.forEach(p => {
+                    const item = document.createElement('li');
+                    item.textContent = `${p.name} - $${p.price.toFixed(2)}`;
+                    list.appendChild(item);
+                });
+            } catch (error) {
+                console.error("Error al cargar productos:", error);
+                document.getElementById('product-list').innerHTML = '<p style="color: red;">Error al conectar con la API del backend.</p>';
+            }
+        }
 
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Secrets Management</h3>
-                    <p>Credenciales gestionadas con Docker Secrets y variables de entorno, nunca hardcodeadas.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
+        async function testAttack() {
+            const statusElement = document.getElementById('attack-status');
+            statusElement.textContent = 'Iniciando prueba de conexión externa...';
 
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Security Context</h3>
-                    <p>ReadOnlyRootFilesystem, capabilities drop, y seccomp profiles aplicados.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Resource Limits</h3>
-                    <p>Límites de CPU y memoria configurados para prevenir ataques de denegación de servicio.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Network Policies</h3>
-                    <p>Políticas de red zero-trust: denegar todo por defecto, permitir solo lo necesario.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Image Scanning</h3>
-                    <p>Escaneo automático con Trivy para detectar vulnerabilidades antes del despliegue.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon"></div>
-                    <h3>Health Checks</h3>
-                    <p>Liveness y readiness probes configurados para alta disponibilidad.</p>
-                    <span class="badge badge-success">Implementado</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Comparison Section -->
-        <section class="comparison">
-            <h2> Comparación: Inseguro vs Seguro</h2>
-            <div class="comparison-grid">
-                <div class="comparison-card unsafe">
-                    <h3> Contenedor Inseguro</h3>
-                    <ul>
-                        <li>Imagen: Ubuntu (180 MB)</li>
-                        <li>Usuario: root (UID 0)</li>
-                        <li>Vulnerabilidades: 50+</li>
-                        <li>Credenciales: Hardcodeadas</li>
-                        <li>Capabilities: ALL</li>
-                        <li>Resource limits: Ninguno</li>
-                    </ul>
-                    <div class="security-score unsafe-score">
-                        Nivel de Seguridad: 2/10
-                    </div>
-                </div>
-
-                <div class="comparison-card safe">
-                    <h3>✅ Contenedor Seguro</h3>
-                    <ul>
-                        <li>Imagen: Alpine (50 MB)</li>
-                        <li>Usuario: appuser (UID 1001)</li>
-                        <li>Vulnerabilidades: &lt;5</li>
-                        <li>Credenciales: Secrets/EnvVars</li>
-                        <li>Capabilities: Mínimas</li>
-                        <li>Resource limits: Configurados</li>
-                    </ul>
-                    <div class="security-score safe-score">
-                        Nivel de Seguridad: 9/10
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- API Documentation -->
-        <section class="api-docs">
-            <h2> Endpoints de la API</h2>
-            <div class="endpoint-list">
-                <div class="endpoint">
-                    <span class="method post">POST</span>
-                    <span class="path">/api/auth/register</span>
-                    <span class="description">Registrar nuevo usuario</span>
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>
-                    <span class="path">/api/auth/login</span>
-                    <span class="description">Iniciar sesión</span>
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>
-                    <span class="path">/api/products</span>
-                    <span class="description">Listar productos </span>
-                </div>
-                <div class="endpoint">
-                    <span class="method post">POST</span>
-                    <span class="path">/api/purchases</span>
-                    <span class="description">Realizar compra </span>
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>
-                    <span class="path">/api/security/metrics</span>
-                    <span class="description">Métricas de seguridad </span>
-                </div>
-                <div class="endpoint">
-                    <span class="method get">GET</span>
-                    <span class="path">/health</span>
-                    <span class="description">Health check</span>
-                </div>
-            </div>
-            <p class="note"> = Requiere autenticación JWT</p>
-        </section>
-
-        <!-- Quick Start -->
-        <section class="quick-start">
-            <h2> Inicio Rápido</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Instalar Dependencias</h3>
-                    <code>npm install && npm run seed</code>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Construir Imágenes</h3>
-                    <code>npm run docker:build-secure</code>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Ejecutar Contenedor</h3>
-                    <code>npm run docker:compose</code>
-                </div>
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Acceder a la App</h3>
-                    <code>http://localhost:3000</code>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>&copy; 2024 Demo de Seguridad de Contenedores. Propósito educativo.</p>
-            <p>
-                <a href="https://github.com" target="_blank">GitHub</a> |
-                <a href="docs/SECURITY.md">Documentación de Seguridad</a>
-            </p>
-        </footer>
-    </div>
+            try {
+                const response = await fetch('/api/attack-test');
+                const result = await response.text();
+                statusElement.textContent = `Resultado del Test: ${result}`;
+                if (response.status === 500) {
+                     statusElement.style.color = 'green';
+                } else {
+                     statusElement.style.color = 'red';
+                }
+            } catch (error) {
+                statusElement.textContent = `Error de red al intentar la prueba. Esto puede indicar que la Network Policy está bloqueando la solicitud.`;
+                statusElement.style.color = 'green';
+            }
+        }
+    </script>
 </body>
 </html>

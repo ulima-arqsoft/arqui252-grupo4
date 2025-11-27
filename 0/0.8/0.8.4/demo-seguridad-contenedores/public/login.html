@@ -2,259 +2,37 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema de Compras</title>
+    <title>Login - Demo Seguridad de Compras</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos específicos para el login */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="login-box">
-            <div class="login-header">
-                <h1> Sistema de Compras Seguro</h1>
-                <p>Iniciar Sesión</p>
-            </div>
-
-            <!-- Alert Messages -->
-            <div id="alertMessage" class="alert" style="display: none;"></div>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="login-form">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="usuario@ejemplo.com" 
-                        required
-                        autocomplete="email"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="••••••••" 
-                        required
-                        autocomplete="current-password"
-                    >
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-                    Iniciar Sesión
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <p>¿No tienes cuenta? <a href="#" id="showRegister">Regístrate aquí</a></p>
-                <p><a href="index.html">← Volver al inicio</a></p>
-            </div>
-
-            <!-- Demo Credentials -->
-            <div class="demo-credentials">
-                <h3> Credenciales de Prueba</h3>
-                <div class="credential-box">
-                    <strong>Admin:</strong>
-                    <p>Email: admin@ejemplo.com</p>
-                    <p>Password: admin123</p>
-                </div>
-                <div class="credential-box">
-                    <strong>Usuario:</strong>
-                    <p>Email: usuario1@ejemplo.com</p>
-                    <p>Password: password123</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Register Form (Hidden) -->
-        <div class="login-box" id="registerBox" style="display: none;">
-            <div class="login-header">
-                <h1> Registro de Usuario</h1>
-                <p>Crear Cuenta Nueva</p>
-            </div>
-
-            <div id="registerAlertMessage" class="alert" style="display: none;"></div>
-
-            <form id="registerForm" class="login-form">
-                <div class="form-group">
-                    <label for="regUsername">Nombre de Usuario</label>
-                    <input 
-                        type="text" 
-                        id="regUsername" 
-                        name="username" 
-                        placeholder="usuario123" 
-                        required
-                        autocomplete="username"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="regEmail">Email</label>
-                    <input 
-                        type="email" 
-                        id="regEmail" 
-                        name="email" 
-                        placeholder="usuario@ejemplo.com" 
-                        required
-                        autocomplete="email"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="regPassword">Contraseña</label>
-                    <input 
-                        type="password" 
-                        id="regPassword" 
-                        name="password" 
-                        placeholder="••••••••" 
-                        required
-                        autocomplete="new-password"
-                        minlength="6"
-                    >
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
-                    Registrarse
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <p>¿Ya tienes cuenta? <a href="#" id="showLogin">Inicia sesión aquí</a></p>
-            </div>
-        </div>
+        <h1>Iniciar Sesión</h1>
+        <p>Esta es una simulación. Las credenciales no se verifican.</p>
+        <form onsubmit="event.preventDefault(); window.location.href = 'index.html';">
+            <input type="text" placeholder="Usuario" required>
+            <input type="password" placeholder="Contraseña" required>
+            <button type="submit" style="background-color: #007bff;">Ingresar</button>
+        </form>
     </div>
-
-    <script>
-        const API_BASE = window.location.origin;
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const loginBox = document.querySelector('.login-box:not(#registerBox)');
-        const registerBox = document.getElementById('registerBox');
-        const showRegisterLink = document.getElementById('showRegister');
-        const showLoginLink = document.getElementById('showLogin');
-
-        // Toggle between login and register
-        showRegisterLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginBox.style.display = 'none';
-            registerBox.style.display = 'block';
-        });
-
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            registerBox.style.display = 'none';
-            loginBox.style.display = 'block';
-        });
-
-        // Show alert message
-        function showAlert(message, type = 'error', formType = 'login') {
-            const alertId = formType === 'login' ? 'alertMessage' : 'registerAlertMessage';
-            const alertElement = document.getElementById(alertId);
-            alertElement.textContent = message;
-            alertElement.className = `alert alert-${type}`;
-            alertElement.style.display = 'block';
-            
-            setTimeout(() => {
-                alertElement.style.display = 'none';
-            }, 5000);
-        }
-
-        // Login form submission
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const loginBtn = document.getElementById('loginBtn');
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Iniciando sesión...';
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Save token
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    showAlert('Login exitoso! Redirigiendo...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
-                } else {
-                    showAlert(data.error || 'Error al iniciar sesión', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error de conexión con el servidor', 'error');
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Iniciar Sesión';
-            }
-        });
-
-        // Register form submission
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const registerBtn = document.getElementById('registerBtn');
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'Registrando...';
-            
-            const username = document.getElementById('regUsername').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/auth/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Save token
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    showAlert('Registro exitoso! Redirigiendo...', 'success', 'register');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
-                } else {
-                    showAlert(data.error || 'Error al registrar usuario', 'error', 'register');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showAlert('Error de conexión con el servidor', 'error', 'register');
-            } finally {
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'Registrarse';
-            }
-        });
-
-        // Check if already logged in
-        if (localStorage.getItem('token')) {
-            window.location.href = 'dashboard.html';
-        }
-    </script>
 </body>
 </html>

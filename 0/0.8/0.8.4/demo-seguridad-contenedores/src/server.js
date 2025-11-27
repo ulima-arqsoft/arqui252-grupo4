@@ -1,125 +1,58 @@
-require('dotenv').config();
+// src/server.js
 const express = require('express');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const cors = require('cors');
+const app = express();
 const path = require('path');
-const app = require('./app');
-const { initDatabase } = require('./database');
 
+// --- Secrets Management (Obteniendo variables de entorno) ---
 const PORT = process.env.PORT || 3000;
+// La clave de conexión real (simulada por ahora)
+const DB_CONNECTION_STRING = process.env.DB_CONNECTION_STRING || 'sqlite://dev.db'; 
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ============================================
-// SEGURIDAD: Helmet para headers seguros
-// ============================================
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
-
-// ============================================
-// SEGURIDAD: Rate Limiting
-// ============================================
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // límite de 100 requests por windowMs
-  message: 'Demasiadas solicitudes desde esta IP, intente más tarde',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use('/api/', limiter);
-
-// ============================================
-// SEGURIDAD: CORS configurado
-// ============================================
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-
-// ============================================
-// Servir archivos estáticos
-// ============================================
-app.use(express.static(path.join(__dirname, '../public')));
-
-// ============================================
-// Endpoint de health check para Kubernetes
-// ============================================
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// ============================================
-// Endpoint de readiness para Kubernetes
-// ============================================
-app.get('/ready', async (req, res) => {
-  try {
-    // Verificar conexión a base de datos
-    res.status(200).json({ 
-      status: 'ready',
-      database: 'connected'
-    });
-  } catch (error) {
-    res.status(503).json({ 
-      status: 'not ready',
-      error: error.message
-    });
-  }
-});
-
-// ============================================
-// Iniciar servidor
-// ============================================
-async function startServer() {
-  try {
-    // Inicializar base de datos
-    await initDatabase();
-    console.log('✓ Base de datos inicializada');
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`
-╔════════════════════════════════════════════════╗
-║    Sistema de Compras Seguro                   ║
-║    Demo de Seguridad de Contenedores           ║
-╟────────────────────────────────────────────────╢
-║  Servidor ejecutándose en puerto ${PORT}       ║
-║  Modo: ${process.env.NODE_ENV || 'development'}║
-║  Usuario: ${process.env.USER || 'appuser'}     ║
-╚════════════════════════════════════════════════╝
-      `);
-    });
-  } catch (error) {
-    console.error('Error al iniciar el servidor:', error);
-    process.exit(1);
-  }
+if (NODE_ENV === 'development') {
+    console.warn(`[SECRETS] Usando cadena de conexión por defecto: ${DB_CONNECTION_STRING}`);
+} else {
+    // Si estuviéramos en K8s, esta variable vendría de un Secret
+    console.log('[SECRETS] Usando cadena de conexión de entorno seguro.');
 }
+// -----------------------------------------------------------
 
-// ============================================
-// Manejo de señales de terminación
-// ============================================
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recibido, cerrando servidor...');
-  server.close(() => {
-    console.log('Servidor cerrado correctamente');
-    process.exit(0);
-  });
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.json()); // Habilitar lectura de JSON en el cuerpo de la solicitud
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-startServer();
+// Endpoint de la API (simulado)
+app.get('/api/products', (req, res) => {
+    // Simulación de productos
+    const products = [
+        { id: 1, name: 'Laptop Segura X', price: 1200.00 },
+        { id: 2, name: 'Monitor Firewall Pro', price: 350.00 },
+        { id: 3, name: 'Cable Ethernet Blindado', price: 15.00 }
+    ];
+    res.json(products);
+});
+
+// Endpoint vulnerable para demostrar Network Policies (simulado)
+// Si esta API estuviera comprometida, intentaría hacer una conexión externa
+app.get('/api/attack-test', async (req, res) => {
+    console.log("Intentando conexión externa a un servidor malicioso...");
+    // Simulamos que el atacante intenta hacer una llamada saliente (EGRESS)
+    try {
+        // En un escenario real, aquí habría una llamada a 'fetch' o 'axios'
+        const externalServer = 'http://external-malicious-server.com/data';
+        // Si la Network Policy está activa, esta llamada fallará.
+        console.log(`Intento de conexión a: ${externalServer}`);
+        res.status(200).send(`Intento de conexión externa registrado. Verifique la Network Policy.`);
+    } catch (error) {
+        res.status(500).send("Fallo al intentar la conexión externa (¡Bien! La Network Policy podría estar funcionando).");
+    }
+});
+
+
+app.listen(PORT, () => {
+    console.log(`[INFO] Servidor de compras ejecutándose en http://localhost:${PORT}`);
+});

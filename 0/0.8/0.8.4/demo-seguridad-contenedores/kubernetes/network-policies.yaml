@@ -1,101 +1,34 @@
----
-# Network Policy: Denegar todo el tráfico por defecto
+# kubernetes/network-policies.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: default-deny-all
-  namespace: compras-sistema
+  name: shopping-app-restrict-egress
+  namespace: default
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
----
-# Network Policy: Permitir tráfico hacia la aplicación de compras
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-compras-ingress
-  namespace: compras-sistema
-spec:
+  # Aplica la política a los Pods de la aplicación de compras
   podSelector:
     matchLabels:
-      app: compras
+      app: shopping-app
   policyTypes:
-  - Ingress
-  ingress:
-  # Permitir tráfico desde el Ingress Controller
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 3000
-  # Permitir tráfico desde pods en el mismo namespace
-  - from:
-    - podSelector: {}
-    ports:
-    - protocol: TCP
-      port: 3000
+    - Egress # Esta política aplica a las conexiones salientes
 
----
-# Network Policy: Permitir tráfico saliente de la aplicación
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-compras-egress
-  namespace: compras-sistema
-spec:
-  podSelector:
-    matchLabels:
-      app: compras
-  policyTypes:
-  - Egress
+  # Regla para Egress (Tráfico Saliente)
   egress:
-  # Permitir DNS
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: kube-system
-    ports:
-    - protocol: UDP
-      port: 53
-  # Permitir acceso a base de datos (si está en otro pod)
-  - to:
-    - podSelector:
-        matchLabels:
-          app: database
-    ports:
-    - protocol: TCP
-      port: 5432
-  # Permitir HTTPS saliente (para APIs externas)
-  - to:
-    - namespaceSelector: {}
-    ports:
-    - protocol: TCP
-      port: 443
+    # 1. Permitir al Pod conectarse a la DB (simulada aquí con un selector)
+    - to:
+      - podSelector:
+          matchLabels:
+            app: database # Asume que el Pod de la DB tiene esta etiqueta
+      ports:
+        - protocol: TCP
+          port: 5432 # Puerto de PostgreSQL/DB
 
----
-# Network Policy: Aislar base de datos
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: database-isolation
-  namespace: compras-sistema
-spec:
-  podSelector:
-    matchLabels:
-      app: database
-  policyTypes:
-  - Ingress
-  ingress:
-  # Solo permitir tráfico desde la aplicación de compras
-  - from:
-    - podSelector:
-        matchLabels:
-          app: compras
-    ports:
-    - protocol: TCP
-      port: 5432
+    # 2. Opcional: Permitir resoluciones DNS
+    - to:
+      - namespaceSelector: {}
+        podSelector:
+          matchLabels:
+            k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53 # Puerto DNS

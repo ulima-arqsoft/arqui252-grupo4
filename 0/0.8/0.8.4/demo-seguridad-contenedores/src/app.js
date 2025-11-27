@@ -1,205 +1,56 @@
-const express = require('express');
-const { authenticateToken, login, register } = require('./auth');
-const db = require('./database');
-const { validatePurchase, checkSecurityPolicies } = require('./security/policies');
+// src/app.js
 
-const app = express();
+document.addEventListener('DOMContentLoaded', fetchProducts);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ============================================
-// RUTAS DE AUTENTICACIÓN
-// ============================================
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-    
-    // Validación de entrada
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+/**
+ * Carga los productos desde el endpoint del backend y los renderiza.
+ */
+async function fetchProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        const list = document.getElementById('product-list');
+        list.innerHTML = ''; // Limpiar la lista
+        
+        products.forEach(p => {
+            const item = document.createElement('li');
+            item.textContent = `${p.name} - $${p.price.toFixed(2)}`;
+            list.appendChild(item);
+        });
+    } catch (error) {
+        console.error("Error al cargar productos:", error);
+        document.getElementById('product-list').innerHTML = '<p style="color: red;">Error al conectar con la API del backend.</p>';
     }
+}
 
-    const result = await register(username, email, password);
-    res.status(201).json(result);
-  } catch (error) {
-    console.error('Error en registro:', error);
-    res.status(400).json({ error: error.message });
-  }
-});
+/**
+ * Función para probar la Network Policy (conexión saliente bloqueada).
+ * Nota: Esta función es llamada directamente desde un botón en index.html,
+ * pero es mejor tener la lógica aquí.
+ */
+async function testAttack() {
+    const statusElement = document.getElementById('attack-status');
+    statusElement.textContent = 'Iniciando prueba de conexión externa...';
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email y password requeridos' });
+    try {
+        const response = await fetch('/api/attack-test');
+        const result = await response.text();
+        statusElement.textContent = `Resultado del Test: ${result}`;
+        
+        // Si el código de estado es 500 (o si la red falla), es probable que K8s o la política haya bloqueado el intento.
+        if (response.status === 500) {
+             statusElement.style.color = 'green';
+             statusElement.textContent += " (¡Bloqueo Exitoso de Egress!)";
+        } else {
+             statusElement.style.color = 'red';
+             statusElement.textContent += " (¡Conexión Externa Exitosa! La Network Policy falló o no está aplicada.)";
+        }
+    } catch (error) {
+        // Un error de red aquí es una buena señal en K8s con Network Policy
+        statusElement.textContent = `Error de red al intentar la prueba. Esto puede indicar que la Network Policy está bloqueando la solicitud.`;
+        statusElement.style.color = 'green';
     }
+}
 
-    const result = await login(email, password);
-    res.json(result);
-  } catch (error) {
-    console.error('Error en login:', error);
-    res.status(401).json({ error: error.message });
-  }
-});
-
-// ============================================
-// RUTAS DE PRODUCTOS (Protegidas)
-// ============================================
-app.get('/api/products', authenticateToken, async (req, res) => {
-  try {
-    const products = await db.all('SELECT * FROM products WHERE available = 1');
-    res.json(products);
-  } catch (error) {
-    console.error('Error obteniendo productos:', error);
-    res.status(500).json({ error: 'Error al obtener productos' });
-  }
-});
-
-app.get('/api/products/:id', authenticateToken, async (req, res) => {
-  try {
-    const product = await db.get('SELECT * FROM products WHERE id = ?', [req.params.id]);
-    
-    if (!product) {
-      return res.status(404).json({ error: 'Producto no encontrado' });
-    }
-    
-    res.json(product);
-  } catch (error) {
-    console.error('Error obteniendo producto:', error);
-    res.status(500).json({ error: 'Error al obtener producto' });
-  }
-});
-
-// ============================================
-// RUTAS DE COMPRAS (Protegidas)
-// ============================================
-app.post('/api/purchases', authenticateToken, async (req, res) => {
-  try {
-    const { productId, quantity } = req.body;
-    const userId = req.user.userId;
-
-    // Validación de seguridad
-    const securityCheck = await checkSecurityPolicies(req);
-    if (!securityCheck.allowed) {
-      return res.status(403).json({ 
-        error: 'Política de seguridad violada', 
-        details: securityCheck.reason 
-      });
-    }
-
-    // Validar compra
-    const validation = await validatePurchase(productId, quantity);
-    if (!validation.valid) {
-      return res.status(400).json({ error: validation.error });
-    }
-
-    // Obtener producto
-    const product = await db.get('SELECT * FROM products WHERE id = ?', [productId]);
-    if (!product || !product.available) {
-      return res.status(404).json({ error: 'Producto no disponible' });
-    }
-
-    // Verificar stock
-    if (product.stock < quantity) {
-      return res.status(400).json({ error: 'Stock insuficiente' });
-    }
-
-    const total = product.price * quantity;
-
-    // Crear compra
-    const result = await db.run(
-      `INSERT INTO purchases (user_id, product_id, quantity, total, status) 
-       VALUES (?, ?, ?, ?, 'pending')`,
-      [userId, productId, quantity, total]
-    );
-
-    // Actualizar stock
-    await db.run(
-      'UPDATE products SET stock = stock - ? WHERE id = ?',
-      [quantity, productId]
-    );
-
-    res.status(201).json({
-      message: 'Compra realizada exitosamente',
-      purchaseId: result.lastID,
-      total: total,
-      securityChecks: securityCheck.checks
-    });
-  } catch (error) {
-    console.error('Error creando compra:', error);
-    res.status(500).json({ error: 'Error al procesar compra' });
-  }
-});
-
-app.get('/api/purchases', authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const purchases = await db.all(
-      `SELECT p.*, pr.name as product_name, pr.price 
-       FROM purchases p 
-       JOIN products pr ON p.product_id = pr.id 
-       WHERE p.user_id = ?
-       ORDER BY p.created_at DESC`,
-      [userId]
-    );
-    
-    res.json(purchases);
-  } catch (error) {
-    console.error('Error obteniendo compras:', error);
-    res.status(500).json({ error: 'Error al obtener compras' });
-  }
-});
-
-// ============================================
-// ENDPOINT DE MÉTRICAS DE SEGURIDAD
-// ============================================
-app.get('/api/security/metrics', authenticateToken, async (req, res) => {
-  try {
-    const metrics = {
-      containerInfo: {
-        user: process.env.USER || 'unknown',
-        nodeEnv: process.env.NODE_ENV || 'development',
-        platform: process.platform,
-        nodeVersion: process.version
-      },
-      securityFeatures: {
-        helmet: true,
-        rateLimit: true,
-        authentication: true,
-        cors: true,
-        nonRootUser: process.getuid ? process.getuid() !== 0 : 'N/A'
-      },
-      resourceUsage: {
-        memory: process.memoryUsage(),
-        uptime: process.uptime()
-      }
-    };
-    
-    res.json(metrics);
-  } catch (error) {
-    console.error('Error obteniendo métricas:', error);
-    res.status(500).json({ error: 'Error al obtener métricas' });
-  }
-});
-
-// ============================================
-// Manejo de errores 404
-// ============================================
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint no encontrado' });
-});
-
-// ============================================
-// Manejo global de errores
-// ============================================
-app.use((err, req, res, next) => {
-  console.error('Error no manejado:', err);
-  res.status(500).json({ 
-    error: 'Error interno del servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
-
-module.exports = app;
+// Para que la función testAttack sea accesible globalmente desde index.html
+window.testAttack = testAttack;
