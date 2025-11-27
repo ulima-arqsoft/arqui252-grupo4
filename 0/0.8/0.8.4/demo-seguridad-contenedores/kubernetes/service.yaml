@@ -1,0 +1,13 @@
+# kubernetes/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopping-app-service
+spec:
+  selector:
+    app: shopping-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer # O NodePort si es necesario exponer fuera
